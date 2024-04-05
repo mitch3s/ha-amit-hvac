@@ -1,0 +1,18 @@
+{
+  "domain": "amit_hvac",
+  "name": "AMiT HVAC",
+  "codeowners": [
+    "@mitch3s"
+  ],
+  "version": "1.0.0",
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/mitch3s/ha-amit-hvac",
+  "homekit": {},
+  "iot_class": "local_polling",
+  "requirements": [
+    "amit_hvac_control"
+  ],
+  "ssdp": [],
+  "zeroconf": []
+}

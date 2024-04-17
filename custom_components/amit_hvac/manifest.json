@@ -11,9 +11,9 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/mitch3s/ha-amit-hvac/issues",
   "requirements": [
-    "amit_hvac_control"
+    "amit_hvac_control>=0.3.3"
   ],
   "ssdp": [],
-  "version": "1.0.0",
+  "version": "1.0.1",
   "zeroconf": []
 }

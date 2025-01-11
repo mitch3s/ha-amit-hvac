@@ -44,7 +44,8 @@ class AmitFanCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         """Get data from API."""
+        _LOGGER.debug("Start loading ventilation data...")
         ventilation_data = await self.amit_api.async_get_ventilation_data()
         overview_data = await self.amit_api.async_get_data()
-
+        _LOGGER.debug("Ventilation data loaded")
         return {"ventilation_data": ventilation_data, "overview_data": overview_data}

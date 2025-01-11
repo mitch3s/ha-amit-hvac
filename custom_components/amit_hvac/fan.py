@@ -1,4 +1,5 @@
 """Platform for sensor integration."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -51,14 +52,26 @@ async def async_setup_entry(
 class AmitVentilationFanEntity(CoordinatorEntity, FanEntity):
     """Fan entity."""
 
-    mode = VentilationMode.OFF
+    ventilation_speed = VentilationMode.OFF  # Off, low, medium, high
 
     _attr_has_entity_name = True
     _attr_name = None
     _attr_preset_modes = [PRESET_AUTO]
-    _attr_supported_features = FanEntityFeature.SET_SPEED | FanEntityFeature.PRESET_MODE
+    _attr_supported_features = (
+        FanEntityFeature.SET_SPEED
+        | FanEntityFeature.PRESET_MODE
+        | FanEntityFeature.TURN_ON
+        | FanEntityFeature.TURN_OFF
+    )
     _attr_is_on = False
     _attr_preset_mode = None
+    _attr_assumed_state = True
+
+    # @cached_property
+    @property
+    def is_on(self) -> bool | None:
+        """Return true if the entity is on."""
+        return self._attr_is_on
 
     def __init__(
         self, api: AmitApi, ventilation_coordinator: AmitFanCoordinator, entry_id: str
@@ -72,10 +85,12 @@ class AmitVentilationFanEntity(CoordinatorEntity, FanEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
+        self._attr_assumed_state = False
         self._attr_available = True
         ventilation_data: VentilationResult = self.coordinator.data["ventilation_data"]
-        self.mode = ventilation_data.ventilation_speed
-        self._attr_is_on = self.mode != VentilationMode.OFF
+
+        self.ventilation_speed = ventilation_data.ventilation_speed
+        self._attr_is_on = ventilation_data.ventilation_mode != VentilationMode.OFF
         self._attr_preset_mode = (
             PRESET_AUTO
             if ventilation_data.ventilation_mode == VentilationMode.AUTO
@@ -86,9 +101,11 @@ class AmitVentilationFanEntity(CoordinatorEntity, FanEntity):
     @property
     def percentage(self) -> int | None:
         """Return the current speed percentage."""
-        if self.mode == VentilationMode.OFF:
-            return 0
-        return ordered_list_item_to_percentage(ORDERED_NAMED_FAN_SPEEDS, self.mode)
+        if self.ventilation_speed == VentilationMode.OFF:
+            return None
+        return ordered_list_item_to_percentage(
+            ORDERED_NAMED_FAN_SPEEDS, self.ventilation_speed
+        )
 
     @property
     def speed_count(self) -> int:
@@ -105,16 +122,33 @@ class AmitVentilationFanEntity(CoordinatorEntity, FanEntity):
 
     async def async_set_mode(self, mode: VentilationMode):
         """Set ventilation mode."""
-        self.mode = mode
+
+        # Heuristic update
+        self.ventilation_speed = mode
+        self._attr_is_on = mode != VentilationMode.OFF
+        self._attr_assumed_state = True
+
+        # Update
         async with self.api.create_client() as client:
             await client.ventilation_api.async_set_ventilation(mode)
+
+        # Refresh
         await self.coordinator.async_request_refresh()
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set the preset mode of the fan."""
+
+        # Heuristic update
+        self._attr_is_on = True
+        self._attr_assumed_state = True
+        self._attr_preset_mode = PRESET_AUTO if preset_mode == PRESET_AUTO else None
+
+        # Update
         if preset_mode == PRESET_AUTO:
             async with self.api.create_client() as client:
                 await client.ventilation_api.async_set_ventilation(VentilationMode.AUTO)
+
+        # Refresh
         await self.coordinator.async_request_refresh()
 
     async def async_turn_on(
@@ -124,6 +158,7 @@ class AmitVentilationFanEntity(CoordinatorEntity, FanEntity):
         **kwargs: Any,
     ) -> None:
         """Turn the entity on."""
+
         if preset_mode == PRESET_AUTO:
             await self.async_set_preset_mode(preset_mode)
         elif percentage is not None:
@@ -133,8 +168,18 @@ class AmitVentilationFanEntity(CoordinatorEntity, FanEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
+
+        # Heurstic update
+        self.ventilation_speed = VentilationMode.OFF
+        self._attr_is_on = False
+        self._attr_preset_mode = None
+        self._attr_assumed_state = True
+
+        # Switch off
         async with self.api.create_client() as client:
             await client.ventilation_api.async_set_ventilation(VentilationMode.OFF)
+
+        # Refresh
         await self.coordinator.async_request_refresh()
 
     @property

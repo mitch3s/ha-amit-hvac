@@ -3,8 +3,13 @@
 from datetime import timedelta
 import logging
 
+from aiohttp import ClientError
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+
+from amit_hvac_control.api.parsing import UnexpectedResponseException
+from amit_hvac_control.client import AuthenticationException
 
 from .api import AmitApi
 
@@ -26,7 +31,12 @@ class AmitSensorCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         """Get data from API."""
-        return await self.amit_api.async_get_data()
+        try:
+            return await self.amit_api.async_get_data()
+        except AuthenticationException as err:
+            raise ConfigEntryAuthFailed(err) from err
+        except (ClientError, TimeoutError, UnexpectedResponseException) as err:
+            raise UpdateFailed(err) from err
 
 
 class AmitFanCoordinator(DataUpdateCoordinator):
@@ -44,8 +54,13 @@ class AmitFanCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         """Get data from API."""
-        _LOGGER.debug("Start loading ventilation data...")
-        ventilation_data = await self.amit_api.async_get_ventilation_data()
-        overview_data = await self.amit_api.async_get_data()
-        _LOGGER.debug("Ventilation data loaded")
+        try:
+            _LOGGER.debug("Start loading ventilation data...")
+            ventilation_data = await self.amit_api.async_get_ventilation_data()
+            overview_data = await self.amit_api.async_get_data()
+            _LOGGER.debug("Ventilation data loaded")
+        except AuthenticationException as err:
+            raise ConfigEntryAuthFailed(err) from err
+        except (ClientError, TimeoutError, UnexpectedResponseException) as err:
+            raise UpdateFailed(err) from err
         return {"ventilation_data": ventilation_data, "overview_data": overview_data}

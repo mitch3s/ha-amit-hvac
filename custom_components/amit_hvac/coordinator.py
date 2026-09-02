@@ -4,6 +4,7 @@ from datetime import timedelta
 import logging
 
 from aiohttp import ClientError
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -19,11 +20,14 @@ _LOGGER = logging.getLogger(__name__)
 class AmitSensorCoordinator(DataUpdateCoordinator):
     """Amit sensor coordinator."""
 
-    def __init__(self, hass: HomeAssistant, amit_api: AmitApi) -> None:
+    def __init__(
+        self, hass: HomeAssistant, amit_api: AmitApi, config_entry: ConfigEntry
+    ) -> None:
         """Initialize my coordinator."""
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name="sensor",
             update_interval=timedelta(seconds=30),
         )
@@ -42,11 +46,14 @@ class AmitSensorCoordinator(DataUpdateCoordinator):
 class AmitFanCoordinator(DataUpdateCoordinator):
     """Amit fan coordinator."""
 
-    def __init__(self, hass: HomeAssistant, amit_api: AmitApi) -> None:
+    def __init__(
+        self, hass: HomeAssistant, amit_api: AmitApi, config_entry: ConfigEntry
+    ) -> None:
         """Initialize my coordinator."""
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name="ventilation",
             update_interval=timedelta(seconds=30),
         )

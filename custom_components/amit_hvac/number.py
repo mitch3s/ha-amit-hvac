@@ -11,7 +11,7 @@ from homeassistant.components.number import (
     NumberEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONCENTRATION_PARTS_PER_MILLION, UnitOfTemperature
+from homeassistant.const import UnitOfRatio, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import DeviceInfo
@@ -57,7 +57,7 @@ NUMBERS = {
         translation_key=KEY_TARGET_CO2,
         device_identifier=DEVICE_VENTILATION_ID,
         device_class=NumberDeviceClass.CO2,
-        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+        native_unit_of_measurement=UnitOfRatio.PARTS_PER_MILLION,
         native_min_value=0,
         native_max_value=1500,
         native_step=100,

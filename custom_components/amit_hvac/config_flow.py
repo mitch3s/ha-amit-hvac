@@ -8,12 +8,12 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigFlow, FlowResult
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 
-from amit_hvac_control.client import AmitHvacControlClient
+from amit_hvac_control.client import AmitHvacControlClient, HostNotReachableException
 from amit_hvac_control.models import Config
 
 from .const import DOMAIN
@@ -40,9 +40,12 @@ async def validate_input(_hass: HomeAssistant, data: dict[str, Any]) -> dict[str
     password = data["password"]
 
     config = Config(host, username, password)
-    async with AmitHvacControlClient(config) as client:
-        if not await client.async_is_valid_auth():
-            raise InvalidAuth
+    try:
+        async with AmitHvacControlClient(config) as client:
+            if not await client.async_is_valid_auth():
+                raise InvalidAuth
+    except HostNotReachableException as err:
+        raise CannotConnect from err
 
     # Return info that you want to store in the config entry.
     return {
@@ -60,7 +63,7 @@ class AmitHvacConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Handle the initial step."""
         errors: dict[str, str] = {}
         if user_input is not None:

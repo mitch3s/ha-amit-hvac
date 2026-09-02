@@ -104,7 +104,7 @@ class AmitVentilationFanEntity(CoordinatorEntity, FanEntity):
     def percentage(self) -> int | None:
         """Return the current speed percentage."""
         if self.ventilation_speed == VentilationMode.OFF:
-            return None
+            return 0
         return ordered_list_item_to_percentage(
             ORDERED_NAMED_FAN_SPEEDS, self.ventilation_speed
         )

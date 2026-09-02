@@ -1,4 +1,5 @@
 """Platform for sensor integration."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -12,11 +13,13 @@ from homeassistant.components.number import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONCENTRATION_PARTS_PER_MILLION, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from amit_hvac_control.api.utils import SettingNotConfirmedException
 from amit_hvac_control.api.ventilation import VentilationResult
 
 from .api import AmitApi
@@ -111,11 +114,17 @@ class AmitNumberEntity(CoordinatorEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
         key = self.entity_description.key
-        if key == KEY_TARGET_AIR_TEMPERATURE:
-            await self._async_set_air_temp_setpoint(value)
-        elif key == KEY_TARGET_CO2:
-            await self._async_set_co2_setpoint(value)
-        await self.coordinator.async_request_refresh()
+        try:
+            if key == KEY_TARGET_AIR_TEMPERATURE:
+                await self._async_set_air_temp_setpoint(value)
+            elif key == KEY_TARGET_CO2:
+                await self._async_set_co2_setpoint(value)
+        except SettingNotConfirmedException as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="setting_not_confirmed"
+            ) from err
+        finally:
+            await self.coordinator.async_request_refresh()
 
     async def _async_set_air_temp_setpoint(self, value: float):
         """Set air temperature setpoint."""

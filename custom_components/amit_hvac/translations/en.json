@@ -27,5 +27,10 @@
                 }
             }
         }
+    },
+    "exceptions": {
+        "setting_not_confirmed": {
+            "message": "AMiT HVAC did not confirm the requested change. Check that the device is reachable and try again."
+        }
     }
 }

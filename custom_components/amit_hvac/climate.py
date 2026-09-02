@@ -1,4 +1,5 @@
 """Platform for sensor integration."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -17,11 +18,13 @@ from homeassistant.components.climate import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from amit_hvac_control.api.status import DataResult
+from amit_hvac_control.api.utils import SettingNotConfirmedException
 from amit_hvac_control.api.ventilation import VentilationResult
 from amit_hvac_control.models import HeatingMode, Season, VentilationMode
 
@@ -88,28 +91,48 @@ class AmitHeatingClimateEntity(ClimateEntity):
         else:
             mode = HeatingMode.COMFORT
 
-        async with self.api.create_client() as client:
-            await client.temperature_api.async_set_heading_mode(mode)
+        try:
+            async with self.api.create_client() as client:
+                await client.temperature_api.async_set_heating_mode(mode)
+        except SettingNotConfirmedException as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="setting_not_confirmed"
+            ) from err
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
         new_temp = kwargs["temperature"]
 
-        async with self.api.create_client() as client:
-            if self.hvac_mode == HVACMode.OFF:
-                await client.temperature_api.async_set_minimal_temperature(new_temp)
-            else:
-                await client.temperature_api.async_set_temperature(new_temp)
+        try:
+            async with self.api.create_client() as client:
+                if self.hvac_mode == HVACMode.OFF:
+                    await client.temperature_api.async_set_minimal_temperature(new_temp)
+                else:
+                    await client.temperature_api.async_set_temperature(new_temp)
+        except SettingNotConfirmedException as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="setting_not_confirmed"
+            ) from err
 
     async def async_turn_on(self) -> None:
         """Turn the entity on."""
-        async with self.api.create_client() as client:
-            await client.temperature_api.async_set_heading_mode(HeatingMode.COMFORT)
+        try:
+            async with self.api.create_client() as client:
+                await client.temperature_api.async_set_heating_mode(HeatingMode.COMFORT)
+        except SettingNotConfirmedException as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="setting_not_confirmed"
+            ) from err
 
     async def async_turn_off(self) -> None:
         """Turn the entity off."""
-        async with self.api.create_client() as client:
-            await client.temperature_api.async_set_heading_mode(HeatingMode.MINIMAL)
+        try:
+            async with self.api.create_client() as client:
+                await client.temperature_api.async_set_heating_mode(HeatingMode.MINIMAL)
+        except SettingNotConfirmedException as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="setting_not_confirmed"
+            ) from err
 
     async def async_update(self) -> None:
         """Update state of entity."""
@@ -197,17 +220,29 @@ class AmitVentilationClimateEntity(CoordinatorEntity, ClimateEntity):
         """Set new target fan mode."""
         mode = FAN_MODE_MAP[fan_mode]
 
-        async with self.api.create_client() as client:
-            await client.ventilation_api.async_set_ventilation(mode)
-        await self.coordinator.async_request_refresh()
+        try:
+            async with self.api.create_client() as client:
+                await client.ventilation_api.async_set_ventilation(mode)
+        except SettingNotConfirmedException as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="setting_not_confirmed"
+            ) from err
+        finally:
+            await self.coordinator.async_request_refresh()
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
         new_temp = kwargs["temperature"]
 
-        async with self.api.create_client() as client:
-            await client.ventilation_api.async_set_target_air_temperature(new_temp)
-        await self.coordinator.async_request_refresh()
+        try:
+            async with self.api.create_client() as client:
+                await client.ventilation_api.async_set_target_air_temperature(new_temp)
+        except SettingNotConfirmedException as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="setting_not_confirmed"
+            ) from err
+        finally:
+            await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self) -> None:
         """Switch off."""

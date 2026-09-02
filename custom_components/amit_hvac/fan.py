@@ -7,6 +7,7 @@ from typing import Any
 from homeassistant.components.fan import FanEntity, FanEntityFeature
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -15,6 +16,7 @@ from homeassistant.util.percentage import (
     percentage_to_ordered_list_item,
 )
 
+from amit_hvac_control.api.utils import SettingNotConfirmedException
 from amit_hvac_control.api.ventilation import VentilationResult
 from amit_hvac_control.models import VentilationMode
 
@@ -129,11 +131,16 @@ class AmitVentilationFanEntity(CoordinatorEntity, FanEntity):
         self._attr_assumed_state = True
 
         # Update
-        async with self.api.create_client() as client:
-            await client.ventilation_api.async_set_ventilation(mode)
-
-        # Refresh
-        await self.coordinator.async_request_refresh()
+        try:
+            async with self.api.create_client() as client:
+                await client.ventilation_api.async_set_ventilation(mode)
+        except SettingNotConfirmedException as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="setting_not_confirmed"
+            ) from err
+        finally:
+            # Refresh
+            await self.coordinator.async_request_refresh()
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set the preset mode of the fan."""
@@ -144,12 +151,19 @@ class AmitVentilationFanEntity(CoordinatorEntity, FanEntity):
         self._attr_preset_mode = PRESET_AUTO if preset_mode == PRESET_AUTO else None
 
         # Update
-        if preset_mode == PRESET_AUTO:
-            async with self.api.create_client() as client:
-                await client.ventilation_api.async_set_ventilation(VentilationMode.AUTO)
-
-        # Refresh
-        await self.coordinator.async_request_refresh()
+        try:
+            if preset_mode == PRESET_AUTO:
+                async with self.api.create_client() as client:
+                    await client.ventilation_api.async_set_ventilation(
+                        VentilationMode.AUTO
+                    )
+        except SettingNotConfirmedException as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="setting_not_confirmed"
+            ) from err
+        finally:
+            # Refresh
+            await self.coordinator.async_request_refresh()
 
     async def async_turn_on(
         self,
@@ -176,11 +190,16 @@ class AmitVentilationFanEntity(CoordinatorEntity, FanEntity):
         self._attr_assumed_state = True
 
         # Switch off
-        async with self.api.create_client() as client:
-            await client.ventilation_api.async_set_ventilation(VentilationMode.OFF)
-
-        # Refresh
-        await self.coordinator.async_request_refresh()
+        try:
+            async with self.api.create_client() as client:
+                await client.ventilation_api.async_set_ventilation(VentilationMode.OFF)
+        except SettingNotConfirmedException as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="setting_not_confirmed"
+            ) from err
+        finally:
+            # Refresh
+            await self.coordinator.async_request_refresh()
 
     @property
     def device_info(self) -> DeviceInfo:

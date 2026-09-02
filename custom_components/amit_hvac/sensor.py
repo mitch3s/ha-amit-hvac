@@ -1,4 +1,5 @@
 """Platform for sensor integration."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -11,7 +12,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONCENTRATION_PARTS_PER_MILLION, UnitOfTemperature
+from homeassistant.const import UnitOfRatio, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -58,7 +59,7 @@ SENSORS = {
         key="co2",
         device_identifier=DEVICE_VENTILATION_ID,
         device_class=SensorDeviceClass.CO2,
-        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+        native_unit_of_measurement=UnitOfRatio.PARTS_PER_MILLION,
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda result: result.co_2,
         exists_fn=lambda result: bool(result.co_2),
@@ -72,7 +73,7 @@ async def async_setup_entry(
     """Set up devices."""
 
     helper: AmitApiHelper = hass.data[DOMAIN][entry.entry_id]
-    coordinator = AmitSensorCoordinator(hass, helper.api)
+    coordinator = AmitSensorCoordinator(hass, helper.api, entry)
 
     await coordinator.async_config_entry_first_refresh()
 

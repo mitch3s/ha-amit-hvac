@@ -6,6 +6,7 @@ logger:
   default: info
   logs:
     custom_components.amit_hvac: debug
+    amit_hvac_control: debug
 
 homeassistant:
   debug: true

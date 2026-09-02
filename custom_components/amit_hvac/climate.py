@@ -65,7 +65,6 @@ async def async_setup_entry(
 class AmitHeatingClimateEntity(ClimateEntity):
     """Amit Heating Climate entity. Used to control heating."""
 
-    _enable_turn_on_off_backwards_compatibility = False
     _attr_supported_features = (
         ClimateEntityFeature.TARGET_TEMPERATURE
         | ClimateEntityFeature.TURN_OFF
@@ -161,7 +160,6 @@ class AmitHeatingClimateEntity(ClimateEntity):
 class AmitVentilationClimateEntity(CoordinatorEntity, ClimateEntity):
     """Amit Ventilation climate entity. Used to control (heated) fan."""
 
-    _enable_turn_on_off_backwards_compatibility = False
     _attr_supported_features = (
         ClimateEntityFeature.TARGET_TEMPERATURE
         | ClimateEntityFeature.FAN_MODE

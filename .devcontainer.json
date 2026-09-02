@@ -1,17 +1,19 @@
 {
   "name": "mitch3s/amit_hvac",
-  "context": "..",
-  "dockerFile": "./Dockerfile.dev",
+  "image": "mcr.microsoft.com/devcontainers/base:debian",
   "postCreateCommand": "scripts/setup",
-  "containerEnv": { "DEVCONTAINER": "1" },
   // Port 5683 udp is used by Shelly integration
   "appPort": ["8123:8123", "5683:5683/udp"],
   "runArgs": ["-e", "GIT_EDITOR=code --wait"],
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.13"
+    }
+  },
   "customizations": {
     "vscode": {
       "extensions": [
         "charliermarsh.ruff",
-        "esbenp.prettier-vscode",
         "ms-python.python",
         "github.vscode-pull-request-github",
         "ryanluker.vscode-coverage-gutters",
@@ -21,16 +23,12 @@
       "settings": {
         "files.eol": "\n",
         "editor.tabSize": 4,
-        "python.pythonPath": "/usr/local/bin/python",
-        "python.analysis.autoSearchPaths": false,
-        "python.linting.pylintEnabled": true,
-        "python.linting.enabled": true,
-        "python.formatting.provider": "black",
-        "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
-        "editor.formatOnPaste": false,
+        "editor.formatOnPaste": true,
         "editor.formatOnSave": true,
-        "editor.formatOnType": true,
+        "editor.formatOnType": false,
         "files.trimTrailingWhitespace": true,
+        "python.analysis.typeCheckingMode": "basic",
+        "python.analysis.autoImportCompletions": true,
         "[python]": {
           "editor.defaultFormatter": "charliermarsh.ruff"
         }

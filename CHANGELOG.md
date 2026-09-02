@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - Pinned all third-party GitHub Actions in `lint.yml`, `validate.yml`, and `release.yml` to commit SHAs (with version comments) instead of floating tags/branches, added `permissions: {}` at the workflow level, and added `persist-credentials: false` to checkout steps.
+- Replaced the custom `Dockerfile.dev` (a copy of home-assistant/core's devcontainer image, with bluez/ffmpeg/libav*/hass-release tooling this integration doesn't use) with a lean `devcontainer-features`-based image, matching current `integration_blueprint` practice.
 
 ### Fixed
 

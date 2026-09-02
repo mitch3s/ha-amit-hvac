@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Pinned all third-party GitHub Actions in `lint.yml`, `validate.yml`, and `release.yml` to commit SHAs (with version comments) instead of floating tags/branches, added `permissions: {}` at the workflow level, and added `persist-credentials: false` to checkout steps.
 - Replaced the custom `Dockerfile.dev` (a copy of home-assistant/core's devcontainer image, with bluez/ffmpeg/libav*/hass-release tooling this integration doesn't use) with a lean `devcontainer-features`-based image, matching current `integration_blueprint` practice.
+- Bumped the devcontainer to Python 3.14 and `ruff` to 0.15.21, pinned the dev `homeassistant` requirement to 2026.8.3 to match `hacs.json`'s minimum supported version, and added a `hacs` minimum version field to `hacs.json`. Added `ffmpeg`, `libturbojpeg0`, and `libpcap-dev` as devcontainer apt packages, committed `.devcontainer-lock.json` to pin the resolved feature versions, and switched `scripts/lint` to run `ruff format` before `ruff check --fix`.
+- Dropped the UDP 5683 port mapping that had been kept for Shelly testing — this integration has no Shelly dependency, and `forwardPorts`/`portsAttributes` (TCP-only) now cover the one port the devcontainer actually needs (8123).
 
 ### Fixed
 
